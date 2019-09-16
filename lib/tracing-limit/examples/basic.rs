@@ -6,7 +6,7 @@ use tracing_limit::Limit;
 use tracing_subscriber::layer::SubscriberExt;
 
 fn main() {
-    let subscriber = tracing_fmt::FmtSubscriber::builder()
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
         .with_filter(tracing_fmt::filter::EnvFilter::from("trace"))
         .finish()
         .with(Limit::default());

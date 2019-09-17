@@ -16,8 +16,8 @@ pub fn init(debug: bool, color: bool, levels: &str, metrics: Option<metrics::Sin
         .with_ansi(color)
         .with_target(debug)
         .with_env_filter(levels)
-        .finish()
-        .with(Limit::default());
+        .finish();
+    // .with(Limit::default());
 
     let dispatch = if let Some(sink) = metrics {
         Dispatch::new(MetricsSubscriber::new(subscriber, sink))

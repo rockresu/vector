@@ -173,7 +173,7 @@ pub fn file_source(
             messages
                 .map(move |(msg, file): (Bytes, String)| {
                     let _enter = span2.enter();
-                    trace!(message = "Received one event.", file = file.as_str());
+                    trace!(message = "Received one event.", file = file.as_str(), rate_limit_secs = 10);
                     create_event(msg, file, &host_key, &hostname, &file_key)
                 })
                 .forward(out.sink_map_err(|e| error!(%e)))

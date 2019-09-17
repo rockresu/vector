@@ -9,7 +9,7 @@ use std::{
 };
 use tracing_core::{
     callsite::Identifier,
-    field::{Field, Value, Visit},
+    field::{Field, Value, Visit, display},
     subscriber::Interest,
     Event, Metadata, Subscriber,
 };
@@ -40,7 +40,7 @@ impl Limit {
 
         let fields = metadata.fields();
 
-        let message = tracing_core::field::display(message);
+        let message = display(message);
 
         if let Some(message_field) = fields.field("message") {
             let values = [

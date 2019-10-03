@@ -18,7 +18,7 @@ impl MqttConfig {
     pub fn new(address: SocketAddr, topics: Vec<String>) -> Self {
         Self {
             address,
-            topics: topics,
+            topics,
         }
     }
 }
@@ -31,7 +31,7 @@ impl SourceConfig for MqttConfig {
         _globals: &GlobalOptions,
         out: mpsc::Sender<Event>,
     ) -> crate::Result<super::Source> {
-        Ok(mqtt(self.address, out))
+        Ok(mqtt(self.address, self.topics.clone(), out))
     }
 
     fn output_type(&self) -> DataType {
@@ -39,26 +39,45 @@ impl SourceConfig for MqttConfig {
     }
 }
 
-pub fn mqtt(address: SocketAddr, out: mpsc::Sender<Event>) -> super::Source {
+pub fn mqtt(address: SocketAddr, topics: Vec<String>, out: mpsc::Sender<Event>) -> super::Source {
     let out = out.sink_map_err(|e| error!("error sending event: {:?}", e));
 
     Box::new(
         future::lazy(move || {
-            let mqtt_options = MqttOptions::new("test-pubsub1", "broker.hivemq.com", 1883);
+            let mqtt_options = MqttOptions::new("test-pubsub1", address.ip().to_string(), address.port());
             let (mut mqtt_client, notifications) = MqttClient::start(mqtt_options).unwrap();
-            mqtt_client.subscribe("hello/world", QoS::AtLeastOnce).unwrap();
-
-
-            for notification in notifications {
-                match notification {
-                    rumqtt::Notification::Publish(publish) => {
-                        Event::from(publish.payload.into());
-                    }
-                    _ => {}
-                }
+            for topic in topics {
+                mqtt_client.subscribe(topic, QoS::AtLeastOnce).unwrap();
             }
 
+            Ok(notifications)
+        }).and_then(move |notifications| {
+
+            for notification in notifications {
+                let event = match notification {
+                    rumqtt::Notification::Publish(publish) => {
+                        let payload = std::str::from_utf8(&(*publish.payload)[..]);
+                        match payload {
+                            Ok(data) => {
+                                let event = Event::from(data);
+                                Some(event)
+                            }
+                            _ => {None}
+                        }
+
+                    }
+                    _ => {None}
+                };
+
+                if let Some(data) = event {
+                    match out.clone().send(data).wait() {
+                        Ok(_) => {}
+                        Err(()) => error!(message = "Could not send journald log"),
+                    }
+                }
+            }
             future::empty()
+//            Ok("Finished");
         })
     )
 }

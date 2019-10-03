@@ -1,0 +1,15 @@
+# STDIO Example
+# ------------------------------------------------------------------------------
+# A simple STDIN / STDOUT example. This script is used in the getting started
+# guide:
+#
+# https://docs.vector.dev/setup/getting-started/sending-your-first-event
+
+[sources.in]
+    type = "mqtt"
+    address = "52.29.71.7:1883"
+    topics = ["hello/mqtt"]
+
+[sinks.out]
+    inputs = ["in"]
+    type = "console"

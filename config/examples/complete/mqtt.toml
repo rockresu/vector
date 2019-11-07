@@ -7,9 +7,11 @@
 
 [sources.in]
     type = "mqtt"
-    address = "52.29.71.7:1883"
-    topics = ["hello/mqtt"]
+    address = "broker.hivemq.com"
+    port = 1883
+    topics = ["hello_1/mqtt", "hello_2/mqtt"]
 
 [sinks.out]
-    inputs = ["in"]
-    type = "console"
+  type = "file" # must be: "file"
+  inputs = ["in"]
+  path = "vector-%Y-%m-%d.log"
